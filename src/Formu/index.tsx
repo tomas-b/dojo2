@@ -14,10 +14,6 @@ interface FormuInput {
   value?: string;
   validations?: string[];
   component?: string;
-  // component?: (props: {
-  //   value: string;
-  //   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  // }) => JSX.Element;
 }
 
 interface FormuStore {
