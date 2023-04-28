@@ -3,8 +3,8 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 
 interface FormuValidationHelpers {
-  isEmail: (value: string) => boolean;
   get: (ref: string) => string;
+  args: string[];
 }
 
 interface FormuInput {
@@ -12,11 +12,12 @@ interface FormuInput {
   label: string;
   type: string;
   value?: string;
-  validation?: (value: string, helpers: FormuValidationHelpers) => any;
-  component?: (props: {
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  }) => JSX.Element;
+  validations?: string[];
+  component?: string;
+  // component?: (props: {
+  //   value: string;
+  //   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  // }) => JSX.Element;
 }
 
 interface FormuStore {
@@ -25,14 +26,38 @@ interface FormuStore {
     _onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   })[];
   load: (inputs: FormuInput[]) => void;
+  helpers?: FormuValidationHelpers;
+  validators: Record<
+    string,
+    (value: string, helpers: FormuValidationHelpers) => boolean
+  >;
+  components: Record<
+    string,
+    (props: {
+      value: string;
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    }) => JSX.Element
+  >;
   check: () => boolean;
-  errors: string[];
+  errors: Record<string, string[]>;
   submit: boolean;
 }
 
 const useStore = create(
   immer<FormuStore>((set, get) => ({
     _inputs: [],
+    validators: {},
+    components: {},
+    helpers: {
+      get: (ref) => {
+        const input = get()._inputs.find((input) => input.ref === ref);
+        if (!input) {
+          throw new Error(`No input found with ref: ${ref}`);
+        }
+        return input._value!;
+      },
+      args: [],
+    },
     load: (inputs) => {
       set((state) => {
         state.submit = false;
@@ -49,40 +74,62 @@ const useStore = create(
     },
     check: () => {
       const { _inputs } = get();
-      const errors: string[] = [];
-      const helpers: FormuValidationHelpers = {
-        isEmail: (value) => {
-          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-        },
-        get: (ref) => {
-          const input = get()._inputs.find((input) => input.ref === ref);
-          if (!input) {
-            throw new Error(`No input found with ref: ${ref}`);
-          }
-          return input._value!;
-        },
-      };
+      const errors: Record<string, string[]> = {};
       _inputs.forEach((input) => {
-        if (input.validation) {
-          const valid = input.validation(input._value!, helpers);
-          if (!valid) {
-            errors.push(input.label);
-          }
+        if (input.validations) {
+          input.validations.forEach((validation) => {
+            const [name, ...args] = validation.split(":");
+            if (
+              !get().validators[name](input._value!, {
+                ...get().helpers!,
+                args,
+              })
+            ) {
+              if (!errors[input.label]) errors[input.label] = [];
+              errors[input.label].push(name);
+            }
+          });
         }
       });
       set((state) => {
         state.errors = errors;
-        state.submit = errors.length === 0 && _inputs.length > 0;
+        state.submit =
+          Object.entries(errors).length === 0 && _inputs.length > 0;
       });
-      return errors.length === 0 && _inputs.length > 0;
+      return Object.entries(errors).length === 0 && _inputs.length > 0;
     },
-    errors: [],
+    errors: {},
     submit: false,
   }))
 );
 
+const addValidators = (
+  validators: Record<
+    string,
+    (value: string, helpers: FormuValidationHelpers) => boolean
+  >
+) => {
+  useStore.setState((state) => {
+    state.validators = { ...state.validators, ...validators };
+  });
+};
+
+const addComponents = (
+  components: Record<
+    string,
+    (props: {
+      value: string;
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    }) => JSX.Element
+  >
+) => {
+  useStore.setState((state) => {
+    state.components = { ...state.components, ...components };
+  });
+};
+
 const Formu = ({ inputs }: { inputs: FormuInput[] }) => {
-  const { load, check, _inputs, errors, submit } = useStore();
+  const { load, check, _inputs, errors, submit, components } = useStore();
 
   useEffect(() => {
     load(inputs);
@@ -104,7 +151,7 @@ const Formu = ({ inputs }: { inputs: FormuInput[] }) => {
           <div key={i}>
             <label>{input.label}</label>
             {input.component ? (
-              input.component({
+              components[input.component]({
                 value: input._value!,
                 onChange: input._onChange!,
               })
@@ -119,8 +166,13 @@ const Formu = ({ inputs }: { inputs: FormuInput[] }) => {
         ))}
       </form>
       <ul>
-        {errors.map((error, i) => (
-          <li key={i}>{error}</li>
+        {Object.entries(errors).map(([label, errors]) => (
+          <li>
+            {label}:
+            {errors.map((error, i) => (
+              <span key={i}>{error}</span>
+            ))}
+          </li>
         ))}
       </ul>
       {submit && <span>sending!</span>}
@@ -128,4 +180,4 @@ const Formu = ({ inputs }: { inputs: FormuInput[] }) => {
   );
 };
 
-export { Formu };
+export { Formu, addValidators, addComponents };

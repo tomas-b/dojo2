@@ -1,6 +1,22 @@
-import { Formu } from "./Formu";
+import { Formu, addValidators, addComponents } from "./Formu";
 import "./App.css";
 
+addValidators({
+  required: (value) => !!value,
+  isEmail: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+  match: (value, { args, get }) => value === get(args[0]),
+});
+
+addComponents({
+  firstName: ({ value, onChange }) => (
+    <input
+      type="text"
+      value={value}
+      onChange={onChange}
+      style={{ background: "red" }}
+    />
+  ),
+});
 
 function App() {
   return (
@@ -11,33 +27,26 @@ function App() {
           {
             label: "First Name",
             type: "text",
-            validation: (value) => value,
-            component: ({ value, onChange }) => (
-              <input
-                type="text"
-                value={value}
-                onChange={onChange}
-                style={{ background: "red" }}
-              />
-            ),
+            validations: ["required"],
+            component: "firstName",
           },
           { label: "Last Name", type: "text" },
           {
             label: "Email",
             type: "text",
-            validation: (value, { isEmail }) => isEmail(value),
+            validations: ["required", "isEmail"],
           },
           { label: "Phone", type: "text" },
           {
             ref: "pass1",
             label: "Password",
             type: "password",
-            validation: (value) => value,
+            validations: ["required"],
           },
           {
             label: "Confirm Password",
             type: "password",
-            validation: (value, { get }) => value && value === get("pass1"),
+            validations: ["required", "match:pass1"],
           },
           { label: "Submit", type: "submit" },
         ]}

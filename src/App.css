@@ -20,12 +20,15 @@ ul {
 }
 
 ul li {
-  display: inline-block;
-  margin: 0 10px 0 0;
+  margin: 10px;
+}
+
+ul li span {
+  color: red;
   border-bottom: 2px solid red;
+  margin: 5px;
 }
 
 span {
   color: #BADA55;
-  font-size: 2em;
 }
