@@ -27,6 +27,7 @@ interface FormuStore {
   load: (inputs: FormuInput[]) => void;
   check: () => boolean;
   errors: string[];
+  submit: boolean;
 }
 
 const useStore = create(
@@ -34,6 +35,7 @@ const useStore = create(
     _inputs: [],
     load: (inputs) => {
       set((state) => {
+        state.submit = false;
         state._inputs = inputs.map((input, i) => ({
           ...input,
           _value: input.value || "",
@@ -70,15 +72,17 @@ const useStore = create(
       });
       set((state) => {
         state.errors = errors;
+        state.submit = errors.length === 0 && _inputs.length > 0;
       });
-      return errors.length === 0;
+      return errors.length === 0 && _inputs.length > 0;
     },
     errors: [],
+    submit: false,
   }))
 );
 
 const Formu = ({ inputs }: { inputs: FormuInput[] }) => {
-  const { load, check, _inputs, errors } = useStore();
+  const { load, check, _inputs, errors, submit } = useStore();
 
   useEffect(() => {
     load(inputs);
@@ -119,6 +123,7 @@ const Formu = ({ inputs }: { inputs: FormuInput[] }) => {
           <li key={i}>{error}</li>
         ))}
       </ul>
+      {submit && <span>sending!</span>}
     </>
   );
 };

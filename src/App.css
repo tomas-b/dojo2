@@ -24,3 +24,8 @@ ul li {
   margin: 0 10px 0 0;
   border-bottom: 2px solid red;
 }
+
+span {
+  color: #BADA55;
+  font-size: 2em;
+}
