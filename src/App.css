@@ -1,5 +1,6 @@
 * {
   box-sizing: border-box;
+  outline: none;
 }
 
 body {
@@ -7,11 +8,21 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-input {
+.formu__default {
+  border-left: 1px solid #ccc;
+  padding: 5px;
+  margin: 5px;
+}
+
+.formu__default input {
   padding: 12px;
   border: 1px solid #ccc;
   border-radius: 4px;
   resize: vertical;
+}
+
+.formu__default label {
+  margin: 0.5em;
 }
 
 ul {
@@ -30,5 +41,56 @@ ul li span {
 }
 
 span {
-  color: #BADA55;
+  color: #bada55;
+}
+
+/* custom css */
+
+.custom__input {
+  display: inline-flex;
+  flex-direction: row;
+}
+
+.custom__input input {
+  padding: 16px;
+  font-size: 16px;
+  width: 300px;
+  border: 2px solid #aaa;
+  border-top: none;
+  border-right: none;
+  border-radius: 0;
+  resize: vertical;
+  margin: 6px;
+  background: white;
+  transition: background .5s ease-in-out;
+}
+
+.custom__input span {
+  background: black;
+  color: white;
+  padding: 3px 10px;
+  margin: 2px;
+  border-radius: 2em;
+}
+
+.custom__input.success input {
+  background: rgba(0, 255, 0, 0.1);
+}
+
+.custom__input.error input {
+  background: rgba(255, 0, 0, 0.1);
+}
+
+.custom__btn {
+  margin: 1em;
+  background-color: #4caf50;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.custom__btn:hover {
+  background-color: #45a049;
 }
